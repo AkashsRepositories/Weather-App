@@ -1,0 +1,113 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&display=swap');
+
+*,
+*::before, 
+*::after
+{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root{
+    --smaller: 0.5rem;
+    --small: 0.75rem;
+    --regular: 1rem;
+    --big: 1.25rem;
+    --bigger: 1.5rem;
+
+    --font-family-1: 'Caveat', cursive;
+
+    --regular-spacing: 0.5rem;
+    --medium-spacing: 1rem;
+    --heavy-spacing: 2rem;
+}
+
+body{
+    font-family: var(--font-family-1);
+    width: 320px;
+    margin: auto;
+}
+
+.header{
+    display: flex;
+    justify-content: space-evenly;
+}
+
+section{
+    border: 2px solid limegreen;    
+}
+.main-grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(auto-fill, minmax(1fr, 250px));
+    /* grid-auto-rows: ; */
+    grid-template-areas: 
+    "current current"
+    "hourly hourly"
+    "five-day five-day"
+    "feels-like humidity";
+}
+
+.weather-now{
+    grid-area: current;
+    text-align: center;
+}
+
+.weather-now  .high-temp{
+    margin-right: var(--medium-spacing);
+}
+
+.hourly-forecast{
+    grid-area: hourly;
+    display: flex;
+    flex-flow: row nowrap;
+    overflow-x: scroll;
+    display: flex;
+}
+
+.hourly-forecast-item{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.hourly-weather-icon{
+    width: 100px;
+    height: 100px;
+}
+
+.five-days-forecast{
+        grid-area: five-day;
+}
+
+.five-days-forecast .five-days-day{
+    display: grid;
+    grid-template: auto / repeat(4, 1fr);
+    place-items: center;
+    padding: 0 var(--regular-spacing);
+}
+
+.five-days-forecast .five-days-day .the-day{
+    display: inline-block;
+    text-transform: capitalize;
+    justify-self: start;
+}
+
+.five-days-forecast .five-days-day .max-temp{
+    justify-self: end;
+}
+
+.feels-like{
+    grid-area: feels-like;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.humidity{
+    grid-area: humidity;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
