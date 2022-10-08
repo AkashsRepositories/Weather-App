@@ -4,6 +4,32 @@ const giveIconUrl = (icon) =>  `http://openweathermap.org/img/wn/${icon}@2x.png`
 
 const DAYS  = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
+const displaySimilarCities =  (citiesJson) => {
+    //access datalist element and add cities as options into that
+    const dataList = document.querySelector('datalist#cities');
+
+    const citiesArray = Array.from(citiesJson);
+    let newInnerHtml = '';
+
+    for(let city of citiesArray){
+            newInnerHtml += `
+            <option value="${city.name}, ${city.state} - ${city.country}" name ="${city}">
+            `;
+    }
+
+    dataList.innerHTML = newInnerHtml;
+}   
+
+const similarCities = async (city) => {
+    let limit = 5;
+
+    const response  = await fetch(`http://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=${limit}&appid=${API_key}`)
+
+    const citiesJson = await response.json();
+
+    displaySimilarCities(await citiesJson);
+}
+
 function calculateDayWise(forecastList){
     
     // console.log(forecastList);
@@ -48,7 +74,7 @@ function load5DaysForecast({list: forecastList}){
     const  dayWise = calculateDayWise(forecastList);
     const fiveDaysContainer = document.querySelector('.five-days-forecast');
 
-    let htmlContent = fiveDaysContainer.innerHTML;
+    let htmlContent = '';
 
     let index = 0;
     for(let [day, values] of dayWise){
@@ -74,22 +100,26 @@ function load5DaysForecast({list: forecastList}){
     }
 
     fiveDaysContainer.innerHTML = htmlContent;
-    console.log(dayWise);
 }
 
 function loadHourlyForecast({list}){
-    const listOfFirst12 = list.slice(0, 12);
+    const listOfFirst12 = list.slice(2, 14);
 
+    const dateFormatter = Intl.DateTimeFormat("en",{
+        hour12: true, hour: "numeric"
+    });
     const hourlyContainer = document.querySelector('.hourly-forecast');
-    let newInnerHTML = hourlyContainer.innerHTML;
+    let newInnerHTML = '';
     // hourlyContainer.innerHTML
     listOfFirst12.forEach(elem => {
         const {main:{temp}, weather:[{description, icon}], dt_txt} = elem;
         newInnerHTML += `<section class="hourly-forecast-item">
-        <h3 class="hourly-time">${dt_txt.split(" ")[1]}</h3>
+        <h3 class="hourly-time">${dateFormatter.format(new Date(dt_txt))}</h3>
         <img class="hourly-weather-icon" src="${giveIconUrl(icon)}" alt="${description}">
         <h3 class="hourly-temp">${formatTemp(temp)}</h3>
         </section>`;
+
+        console.log('adding element in hourly-forecast-container')
     });
 
     hourlyContainer.innerHTML = newInnerHTML;
@@ -125,10 +155,9 @@ function loadCurrentWeather(currentWeatherJSON){
 // 36 => 36° C
 const formatTemp = (temp) => `${temp}° C`;
 
-//get data once when DOM content has been loaded
-document.addEventListener('DOMContentLoaded', async ()=>{
-    
-    const city = document.querySelector('.city').textContent;
+const loadDataForSpecifiedCity = async (city) => {
+    document.querySelector('.city').textContent = city;
+
     const unitOfMeasurement = 'metric'; //metric is used for celsius
     
     //current Weather forecast
@@ -143,4 +172,36 @@ document.addEventListener('DOMContentLoaded', async ()=>{
 
     loadHourlyForecast(await hourlyForecastJSON);
     load5DaysForecast(await hourlyForecastJSON);
+}
+
+const addEventListenersOnSearchBox = async ()  => {
+    //fetching the search input box
+    const searchBox = document.querySelector('#city-search');
+
+    //when input is changed
+    searchBox.addEventListener('input', async function(event){
+        const inputCity = searchBox.value;
+        console.log(inputCity);
+
+        //only make a request to api when inputCity has some value (to avoid error)
+        if(inputCity)
+            similarCities(inputCity);
+    });
+
+    //when user searching for a city
+    searchBox.addEventListener('change', async ()=>{
+        const inputCity = searchBox.value;
+        if(inputCity)
+            loadDataForSpecifiedCity(inputCity);
+    })
+}
+
+//get data once when DOM content has been loaded
+document.addEventListener('DOMContentLoaded', async ()=>{
+    
+    const city = document.querySelector('.city').textContent;
+    loadDataForSpecifiedCity(city);
+
+    addEventListenersOnSearchBox();
 });
+
