@@ -4,6 +4,24 @@ const giveIconUrl = (icon) =>  `http://openweathermap.org/img/wn/${icon}@2x.png`
 
 const DAYS  = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
+const handleCitySelection = async (event) => {
+    const selectedCity = event.target.value;
+    if(!selectedCity) return;
+
+          const options = document.querySelectorAll('#cities option')
+        //   console.log('from outside loop ',options)
+          if(options?.length){
+               for(let option of options){
+                     if(option.value === selectedCity){
+                           console.log(option);
+                           const json = await JSON.parse(option.getAttribute('cdetails'));
+                           const {lat, lon, name: city} = await json
+                           loadDataForSpecifiedCity(await lat, await lon, await city);
+                     }
+               }
+          }
+}
+
 const displaySimilarCities =  (citiesJson) => {
     //access datalist element and add cities as options into that
     const dataList = document.querySelector('datalist#cities');
@@ -12,8 +30,9 @@ const displaySimilarCities =  (citiesJson) => {
     let newInnerHtml = '';
 
     for(let city of citiesArray){
+        // console.log("using stringify function: ", JSON.stringify(city))
             newInnerHtml += `
-            <option value="${city.name}, ${city.state} - ${city.country}" name ="${city}">
+            <option value="${city.name}, ${city.state} - ${city.country}" cdetails='${JSON.stringify(city)}' name="city">
             `;
     }
 
@@ -118,8 +137,6 @@ function loadHourlyForecast({list}){
         <img class="hourly-weather-icon" src="${giveIconUrl(icon)}" alt="${description}">
         <h3 class="hourly-temp">${formatTemp(temp)}</h3>
         </section>`;
-
-        console.log('adding element in hourly-forecast-container')
     });
 
     hourlyContainer.innerHTML = newInnerHTML;
@@ -135,7 +152,18 @@ function loadFeelsLikeAndHumidity({main:{feels_like, humidity}}){
 
 function loadCurrentWeather(currentWeatherJSON){
 
-    let {main:{temp, temp_min, temp_max}, weather: [{description}]} = currentWeatherJSON;
+    let {name: city, main:{temp, temp_min, temp_max}, weather: [{description}]} = currentWeatherJSON;
+    //debugging
+    console.log('it is from currentWeatherdata func: ', currentWeatherJSON);
+
+    //showing current city name 
+    const cityElem = document.querySelector('.weather-now > .city');
+
+    if(cityElem.textContent = ' ')
+        cityElem.textContent = city;
+
+    console.log('after condition in loadCurrentWeather: ', cityElem.textContent);
+    
     const currentWeather = document.querySelector('.weather-now');
     const temperature = currentWeather.querySelector('.temperature');
     const desc = currentWeather.querySelector('.description');
@@ -155,19 +183,18 @@ function loadCurrentWeather(currentWeatherJSON){
 // 36 => 36° C
 const formatTemp = (temp) => `${temp}° C`;
 
-const loadDataForSpecifiedCity = async (city) => {
-    document.querySelector('.city').textContent = city;
+const loadDataForSpecifiedCity = async (lat, lon, city = ' ') => {
 
     const unitOfMeasurement = 'metric'; //metric is used for celsius
     
     //current Weather forecast
-    const currentWeatherAsJSONString = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_key}&units=${unitOfMeasurement}`);
-    const currentWeatherJSON = await currentWeatherAsJSONString.json();  
+    const currentWeatherAsJSONString = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_key}&units=${unitOfMeasurement}`);
+    const currentWeatherJSON = await currentWeatherAsJSONString.json();   
 
     loadCurrentWeather(await currentWeatherJSON);
 
     //hourly forecast
-    const hourlyForecastJSONString = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${API_key}&units=${unitOfMeasurement}`)
+    const hourlyForecastJSONString = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_key}&units=${unitOfMeasurement}`)
     const hourlyForecastJSON = await hourlyForecastJSONString.json();
 
     loadHourlyForecast(await hourlyForecastJSON);
@@ -189,18 +216,22 @@ const addEventListenersOnSearchBox = async ()  => {
     });
 
     //when user searching for a city
-    searchBox.addEventListener('change', async ()=>{
-        const inputCity = searchBox.value;
-        if(inputCity)
-            loadDataForSpecifiedCity(inputCity);
-    })
+    searchBox.addEventListener('change',  handleCitySelection);
+
+}
+
+const successfulLookup = (event) => {
+    console.log(event);
+    let { coords:{latitude: lat, longitude: lon} } = event;
+    loadDataForSpecifiedCity(lat, lon);
+    
 }
 
 //get data once when DOM content has been loaded
 document.addEventListener('DOMContentLoaded', async ()=>{
-    
-    const city = document.querySelector('.city').textContent;
-    loadDataForSpecifiedCity(city);
+
+    window.navigator.geolocation
+  .getCurrentPosition(successfulLookup, console.log);
 
     addEventListenersOnSearchBox();
 });
