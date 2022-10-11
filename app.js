@@ -1,6 +1,6 @@
 const API_key = 'e0cf05bb3121e683735fffbd36087cec';
 
-const giveIconUrl = (icon) =>  `http://openweathermap.org/img/wn/${icon}@2x.png`;
+const giveIconUrl = (icon) =>  `https://openweathermap.org/img/wn/${icon}@2x.png`;
 
 const DAYS  = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
@@ -39,7 +39,7 @@ const displaySimilarCities =  (citiesJson) => {
 const similarCities = async (city) => {
     let limit = 5;
 
-    const response  = await fetch(`http://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=${limit}&appid=${API_key}`)
+    const response  = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${city}&limit=${limit}&appid=${API_key}`)
 
     const citiesJson = await response.json();
 
